@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creole to English Translator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎤 Creole to English Translator</h1>
+            <p class="subtitle">Speak in Haitian Creole, see English translation</p>
+        </header>
+
+        <div class="provider-selection">
+            <h3>Select Provider:</h3>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="provider" value="gcp" id="providerGcp" checked>
+                    <span class="radio-custom"></span>
+                    <span class="provider-name">Google Cloud Platform</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="provider" value="oci" id="providerOci">
+                    <span class="radio-custom"></span>
+                    <span class="provider-name">Oracle Cloud (OCI)</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="provider" value="llama" id="providerLlama">
+                    <span class="radio-custom"></span>
+                    <span class="provider-name">Meta LLAMA</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="recording-section">
+            <button id="recordBtn" class="record-btn">
+                <span class="btn-icon">🎙️</span>
+                <span class="btn-text">Start Recording</span>
+            </button>
+            <div id="recordingStatus" class="status-indicator"></div>
+        </div>
+
+        <div class="results-section">
+            <div class="result-card">
+                <h3>Original (Haitian Creole)</h3>
+                <div id="transcription" class="result-text">
+                    Your transcription will appear here...
+                </div>
+            </div>
+
+            <div class="arrow">→</div>
+
+            <div class="result-card">
+                <h3>Translation (English)</h3>
+                <div id="translation" class="result-text">
+                    Your translation will appear here...
+                </div>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <div class="info-box">
+            <h4>How to use:</h4>
+            <ol>
+                <li>Choose your provider (GCP, OCI, or LLAMA)</li>
+                <li>Click "Start Recording" and speak in Haitian Creole</li>
+                <li>Click "Stop Recording" when finished</li>
+                <li>Wait for transcription and translation</li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

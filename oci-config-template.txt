@@ -1,0 +1,10 @@
+# OCI Configuration Template
+# Copy this to ~/.oci/config and fill in your actual values
+# Get your OCI credentials from: https://cloud.oracle.com
+
+[DEFAULT]
+user=ocid1.user.oc1..YOUR_USER_OCID
+fingerprint=YOUR_KEY_FINGERPRINT
+key_file=~/.oci/oci_api_key.pem
+tenancy=ocid1.tenancy.oc1..YOUR_TENANCY_OCID
+region=us-phoenix-1
