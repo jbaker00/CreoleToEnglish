@@ -11,6 +11,9 @@
         <header>
             <h1>🎤 Creole to English Translator</h1>
             <p class="subtitle">Speak in Haitian Creole, see English translation</p>
+            <div style="text-align: right; margin-top: 10px;">
+                <a href="settings.html" style="color: #4CAF50; text-decoration: none; font-weight: 600;">⚙️ Settings</a>
+            </div>
         </header>
 
         <div class="provider-selection">
@@ -27,9 +30,19 @@
                     <span class="provider-name">Oracle Cloud (OCI)</span>
                 </label>
                 <label class="radio-label">
-                    <input type="radio" name="provider" value="llama" id="providerLlama">
+                    <input type="radio" name="provider" value="llama" id="providerLLAMA" disabled>
                     <span class="radio-custom"></span>
-                    <span class="provider-name">Meta LLAMA</span>
+                    <span class="provider-name" style="opacity: 0.5;">Meta LLAMA (Disabled - Paid Service)</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="provider" value="groq" id="providerGroq">
+                    <span class="radio-custom"></span>
+                    <span class="provider-name">GROQ (Whisper + Llama)</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="provider" value="huggingface" id="providerHuggingFace" disabled>
+                    <span class="radio-custom"></span>
+                    <span class="provider-name" style="opacity: 0.5;">HuggingFace (Whisper + NLLB) (Disabled - Paid Service)</span>
                 </label>
             </div>
         </div>
@@ -65,11 +78,19 @@
         <div class="info-box">
             <h4>How to use:</h4>
             <ol>
-                <li>Choose your provider (GCP, OCI, or LLAMA)</li>
+                <li>Choose your provider (GCP, OCI, LLAMA, GROQ, or HuggingFace)</li>
+                <li>For GROQ or HuggingFace: Configure your API key in <a href="settings.html" style="color: #4CAF50;">Settings</a></li>
                 <li>Click "Start Recording" and speak in Haitian Creole</li>
                 <li>Click "Stop Recording" when finished</li>
                 <li>Wait for transcription and translation</li>
             </ol>
+            <p style="margin-top: 15px;"><strong>GROQ Features:</strong></p>
+            <ul>
+                <li>🎤 Speech-to-text: OpenAI Whisper (via GROQ)</li>
+                <li>🌐 Translation: Meta Llama 3.3 70B (via GROQ)</li>
+                <li>⏱️ Tip: Keep recordings under 10 seconds for best results</li>
+            </ul>
+
         </div>
     </div>
 

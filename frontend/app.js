@@ -3,6 +3,16 @@ let audioChunks = [];
 let isRecording = false;
 let currentProvider = 'gcp';
 
+// Get GROQ API key from localStorage
+function getGroqApiKey() {
+    return localStorage.getItem('groqApiKey');
+}
+
+// Get Hugging Face API key from localStorage
+function getHfApiKey() {
+    return localStorage.getItem('hfApiKey');
+}
+
 const recordBtn = document.getElementById('recordBtn');
 const recordingStatus = document.getElementById('recordingStatus');
 const transcriptionDiv = document.getElementById('transcription');
@@ -31,7 +41,13 @@ async function startRecording() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         
-        mediaRecorder = new MediaRecorder(stream);
+        // Try to use audio/webm;codecs=opus for better compression
+        let options = { mimeType: 'audio/webm;codecs=opus' };
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+            options = { mimeType: 'audio/webm' };
+        }
+        
+        mediaRecorder = new MediaRecorder(stream, options);
         audioChunks = [];
         
         mediaRecorder.ondataavailable = (event) => {
@@ -39,7 +55,7 @@ async function startRecording() {
         };
         
         mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const audioBlob = new Blob(audioChunks, { type: options.mimeType });
             await sendAudioToServer(audioBlob);
         };
         
@@ -82,7 +98,32 @@ async function sendAudioToServer(audioBlob) {
         formData.append('audio', audioBlob, 'recording.webm');
         formData.append('provider', currentProvider);
         
-        const response = await fetch('http://localhost:3001/api/translate', {
+        // Add GROQ API key if using GROQ provider
+        if (currentProvider === 'groq') {
+            const groqApiKey = getGroqApiKey();
+            if (!groqApiKey) {
+                throw new Error('GROQ API key not found. Please configure it in Settings.');
+            }
+            formData.append('groqApiKey', groqApiKey);
+        }
+
+        // Add HuggingFace API key if using HuggingFace provider
+        if (currentProvider === 'huggingface') {
+            const groqApiKey = getGroqApiKey();
+            const hfApiKey = getHfApiKey();
+            if (!groqApiKey) {
+                throw new Error('GROQ API key not found. Please configure it in Settings (needed for Whisper).');
+            }
+            if (!hfApiKey) {
+                throw new Error('Hugging Face API key not found. Please configure it in Settings (needed for NLLB).');
+            }
+            formData.append('groqApiKey', groqApiKey);
+            formData.append('hfApiKey', hfApiKey);
+        }
+        
+
+        
+        const response = await fetch('/translate', {
             method: 'POST',
             body: formData
         });

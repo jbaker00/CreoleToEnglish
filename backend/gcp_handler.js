@@ -5,11 +5,11 @@ const path = require('path');
 
 // Initialize GCP clients
 const speechClient = new speech.SpeechClient({
-  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS || path.join(process.env.HOME, 'gcp-credentials.json')
+  keyFilename: path.join(process.env.HOME, 'code', 'speech2-484118-38f3e05ae4bc.json')
 });
 
 const translateClient = new Translate({
-  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS || path.join(process.env.HOME, 'gcp-credentials.json')
+  keyFilename: path.join(process.env.HOME, 'code', 'speech2-484118-38f3e05ae4bc.json')
 });
 
 async function processAudio(audioPath) {

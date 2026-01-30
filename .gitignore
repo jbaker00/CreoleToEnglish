@@ -29,6 +29,9 @@ ecosystem.config.js
 # SSL certificates
 ssl/
 
+# Deployment scripts (contain local paths and credentials)
+deploy.sh
+
 # OS files
 .DS_Store
 Thumbs.db

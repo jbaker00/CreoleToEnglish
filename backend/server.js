@@ -1,14 +1,24 @@
 const express = require('express');
+const https = require('https');
+const fs = require('fs');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs').promises;
+const fsPromises = require('fs').promises;
 const gcpHandler = require('./gcp_handler');
 const ociHandler = require('./oci_handler');
 const llamaHandler = require('./llama_handler');
+const groqHandler = require('./groq_handler');
+const huggingfaceHandler = require('./huggingface_handler');
 
 const app = express();
 const PORT = 3001;
+
+// SSL certificate options
+const sslOptions = {
+  key: fs.readFileSync(path.join(__dirname, '../ssl/key.pem')),
+  cert: fs.readFileSync(path.join(__dirname, '../ssl/cert.pem'))
+};
 
 // Middleware
 app.use(cors());
@@ -21,54 +31,63 @@ const upload = multer({ dest: 'audio_temp/' });
 // Ensure temp directory exists
 (async () => {
   try {
-    await fs.mkdir('audio_temp', { recursive: true });
+    await fsPromises.mkdir(path.join(__dirname, 'audio_temp'), { recursive: true });
   } catch (err) {
     console.error('Error creating temp directory:', err);
   }
 })();
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
-
-// Translate endpoint
-app.post('/api/translate', upload.single('audio'), async (req, res) => {
-  const provider = req.body.provider || 'gcp';
-  
-  if (!req.file) {
-    return res.status(400).json({ error: 'No audio file provided' });
-  }
-
+// Routes
+app.post('/translate', upload.single('audio'), async (req, res) => {
   try {
+    const provider = req.body.provider;
     let result;
-    
+
     if (provider === 'gcp') {
       result = await gcpHandler.processAudio(req.file.path);
     } else if (provider === 'oci') {
-      result = await ociHandler.processAudio(req.file.path);
+      const ociConfigPath = req.body.ociConfigPath;
+      result = await ociHandler.processAudio(req.file.path, ociConfigPath);
     } else if (provider === 'llama') {
-      result = await llamaHandler.processAudio(req.file.path);
+      const ociApiKey = req.body.ociApiKey;
+      if (!ociApiKey) {
+        return res.status(400).json({ error: 'OCI API key is required' });
+      }
+      result = await llamaHandler.processAudio(req.file.path, ociApiKey);
+    } else if (provider === 'groq') {
+      const groqApiKey = req.body.groqApiKey;
+      if (!groqApiKey) {
+        return res.status(400).json({ error: 'GROQ API key is required' });
+      }
+      result = await groqHandler.processAudio(req.file.path, groqApiKey);
+    } else if (provider === 'huggingface') {
+      const groqApiKey = req.body.groqApiKey;
+      const hfApiKey = req.body.hfApiKey;
+      if (!groqApiKey) {
+        return res.status(400).json({ error: 'GROQ API key is required for Whisper' });
+      }
+      if (!hfApiKey) {
+        return res.status(400).json({ error: 'Hugging Face API key is required for NLLB' });
+      }
+      result = await huggingfaceHandler.processAudio(req.file.path, groqApiKey, hfApiKey);
     } else {
       return res.status(400).json({ error: 'Invalid provider' });
     }
 
-    // Clean up temp file
-    await fs.unlink(req.file.path).catch(err => 
-      console.error('Error deleting temp file:', err)
+    // Clean up uploaded file
+    await fsPromises.unlink(req.file.path).catch(err => 
+      console.error('Error deleting uploaded file:', err)
     );
 
     res.json(result);
   } catch (error) {
     console.error('Translation error:', error);
     
-    // Clean up temp file on error
-    if (req.file) {
-      await fs.unlink(req.file.path).catch(err => 
-        console.error('Error deleting temp file:', err)
-      );
+    // Try to clean up file on error
+    if (req.file && req.file.path) {
+      await fsPromises.unlink(req.file.path).catch(() => {});
     }
-    
+
     res.status(500).json({ 
       error: 'Translation failed', 
       details: error.message 
@@ -76,6 +95,7 @@ app.post('/api/translate', upload.single('audio'), async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+// Create HTTPS server
+https.createServer(sslOptions, app).listen(PORT, () => {
+  console.log(`Server running on https://localhost:${PORT}`);
 });
