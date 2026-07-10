@@ -1,16 +1,17 @@
 const speech = require('@google-cloud/speech');
 const { Translate } = require('@google-cloud/translate').v2;
 const fs = require('fs').promises;
-const path = require('path');
 
 // Initialize GCP clients
-const speechClient = new speech.SpeechClient({
-  keyFilename: path.join(process.env.HOME, 'code', 'speech2-484118-38f3e05ae4bc.json')
-});
+// Use GOOGLE_APPLICATION_CREDENTIALS env var if set (local dev),
+// otherwise rely on Application Default Credentials (ADC) in Cloud Run.
+const credOptions = process.env.GOOGLE_APPLICATION_CREDENTIALS
+  ? { keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS }
+  : {};
 
-const translateClient = new Translate({
-  keyFilename: path.join(process.env.HOME, 'code', 'speech2-484118-38f3e05ae4bc.json')
-});
+const speechClient = new speech.SpeechClient(credOptions);
+
+const translateClient = new Translate(credOptions);
 
 async function processAudio(audioPath) {
   try {

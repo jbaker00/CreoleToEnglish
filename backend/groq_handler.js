@@ -7,11 +7,12 @@ const ffmpeg = require('fluent-ffmpeg');
 // GROQ API key will be passed as parameter or from environment
 let groqClient = null;
 
-function initializeGroq(apiKey) {
-  if (!apiKey) {
-    throw new Error('GROQ API key is required');
+function initializeGroq() {
+  const resolvedKey = process.env.GROQ_API_KEY;
+  if (!resolvedKey) {
+    throw new Error('GROQ API key is required (set GROQ_API_KEY env var)');
   }
-  groqClient = new Groq({ apiKey });
+  groqClient = new Groq({ apiKey: resolvedKey });
   return groqClient;
 }
 
@@ -34,16 +35,11 @@ async function convertToMp3(inputPath) {
   });
 }
 
-async function processAudio(audioPath, groqApiKey) {
+async function processAudio(audioPath) {
   let mp3Path = null;
-  
+
   try {
-    // Initialize GROQ client with provided API key
-    const client = groqApiKey ? initializeGroq(groqApiKey) : groqClient;
-    
-    if (!client) {
-      throw new Error('GROQ client not initialized. Please provide an API key.');
-    }
+    const client = initializeGroq();
 
     // Step 1: Convert to MP3 for smaller file size
     console.log('GROQ: Converting audio to MP3...');

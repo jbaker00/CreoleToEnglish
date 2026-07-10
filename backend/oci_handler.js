@@ -3,6 +3,7 @@ const aiSpeech = require('oci-aispeech');
 const aiLanguage = require('oci-ailanguage');
 const objectstorage = require('oci-objectstorage');
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
 
 // Configuration
@@ -18,17 +19,54 @@ const SUPPORTED_LANGUAGES = {
   'en': 'en-US'
 };
 
+/**
+ * Build an OCI auth provider.
+ * Prefers ~/.oci/config if it exists; falls back to environment variables:
+ *   OCI_USER_OCID, OCI_FINGERPRINT, OCI_TENANCY_OCID, OCI_REGION, OCI_PRIVATE_KEY
+ */
+function buildAuthProvider() {
+  const configPath = path.join(process.env.HOME || '/root', '.oci', 'config');
+
+  if (fsSync.existsSync(configPath)) {
+    console.log('OCI: Using config file at', configPath);
+    return new common.ConfigFileAuthenticationDetailsProvider(configPath);
+  }
+
+  console.log('OCI: Config file not found, falling back to environment variables');
+
+  const userOcid     = process.env.OCI_USER_OCID;
+  const fingerprint  = process.env.OCI_FINGERPRINT;
+  const tenancyOcid  = process.env.OCI_TENANCY_OCID;
+  const region       = process.env.OCI_REGION;
+  const privateKey   = process.env.OCI_PRIVATE_KEY;
+
+  if (!userOcid || !fingerprint || !tenancyOcid || !region || !privateKey) {
+    throw new Error(
+      'OCI auth not configured: ~/.oci/config not found and one or more required env vars ' +
+      '(OCI_USER_OCID, OCI_FINGERPRINT, OCI_TENANCY_OCID, OCI_REGION, OCI_PRIVATE_KEY) are missing.'
+    );
+  }
+
+  return new common.SimpleAuthenticationDetailsProvider(
+    tenancyOcid,
+    userOcid,
+    fingerprint,
+    privateKey,
+    null, // passphrase
+    common.Region.fromRegionId(region)
+  );
+}
+
 async function processAudio(audioPath) {
   let provider;
   let speechClient;
   let languageClient;
   let objectStorageClient;
   let objectName;
-  
+
   try {
-    // Load OCI configuration
-    const configPath = path.join(process.env.HOME, '.oci', 'config');
-    provider = new common.ConfigFileAuthenticationDetailsProvider(configPath);
+    // Load OCI configuration (config file or env vars)
+    provider = buildAuthProvider();
     
     console.log('OCI: Initializing clients...');
     
@@ -192,7 +230,7 @@ async function ensureBucket(client, namespace, bucketName) {
   }
 }
 
-async function waitForTranscription(speechClient, objectStorageClient, namespace, jobId, maxWaitTimeSeconds = 300) {
+async function waitForTranscription(speechClient, objectStorageClient, namespace, jobId, maxWaitTimeSeconds = 60) {
   const startTime = Date.now();
   const pollInterval = 5000; // 5 seconds
   

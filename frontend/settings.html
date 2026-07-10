@@ -100,45 +100,15 @@
         </div>
 
         <div class="settings-section">
-            <h2>GROQ API Configuration</h2>
-            <form id="settingsForm">
-                <div class="form-group">
-                    <label for="groqApiKey">GROQ API Key</label>
-                    <input 
-                        type="password" 
-                        id="groqApiKey" 
-                        name="groqApiKey" 
-                        placeholder="Enter your GROQ API key"
-                    >
-                    <div class="hint">
-                        Get your API key from <a href="https://console.groq.com/keys" target="_blank">console.groq.com</a>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="hfApiKey">Hugging Face API Token</label>
-                    <input 
-                        type="password" 
-                        id="hfApiKey" 
-                        name="hfApiKey" 
-                        placeholder="Enter your Hugging Face token"
-                    >
-                    <div class="hint">
-                        Get your token from <a href="https://huggingface.co/settings/tokens" target="_blank">huggingface.co/settings/tokens</a>
-                    </div>
-                </div>
-
-                <button type="submit" class="save-btn">Save Settings</button>
-            </form>
+            <h2>API Configuration</h2>
+            <p style="color: #555; font-size: 15px;">API keys are configured server-side. No setup required.</p>
         </div>
 
         <div class="info-box">
-            <h4>About API Keys:</h4>
+            <h4>About this app:</h4>
             <ul>
-                <li><strong>GROQ:</strong> Used for Whisper transcription (both GROQ and HuggingFace providers)</li>
-                <li><strong>Hugging Face:</strong> Used for NLLB translation (HuggingFace provider only, may require paid tier)</li>
-                <li>Your API keys are stored locally in your browser</li>
-                <li>Both have free tiers available</li>
+                <li>All API keys (GROQ, Hugging Face, GCP) are securely managed as server-side environment variables.</li>
+                <li>No credentials are stored in your browser.</li>
             </ul>
         </div>
     </div>

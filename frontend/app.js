@@ -3,15 +3,6 @@ let audioChunks = [];
 let isRecording = false;
 let currentProvider = 'gcp';
 
-// Get GROQ API key from localStorage
-function getGroqApiKey() {
-    return localStorage.getItem('groqApiKey');
-}
-
-// Get Hugging Face API key from localStorage
-function getHfApiKey() {
-    return localStorage.getItem('hfApiKey');
-}
 
 const recordBtn = document.getElementById('recordBtn');
 const recordingStatus = document.getElementById('recordingStatus');
@@ -97,31 +88,6 @@ async function sendAudioToServer(audioBlob) {
         const formData = new FormData();
         formData.append('audio', audioBlob, 'recording.webm');
         formData.append('provider', currentProvider);
-        
-        // Add GROQ API key if using GROQ provider
-        if (currentProvider === 'groq') {
-            const groqApiKey = getGroqApiKey();
-            if (!groqApiKey) {
-                throw new Error('GROQ API key not found. Please configure it in Settings.');
-            }
-            formData.append('groqApiKey', groqApiKey);
-        }
-
-        // Add HuggingFace API key if using HuggingFace provider
-        if (currentProvider === 'huggingface') {
-            const groqApiKey = getGroqApiKey();
-            const hfApiKey = getHfApiKey();
-            if (!groqApiKey) {
-                throw new Error('GROQ API key not found. Please configure it in Settings (needed for Whisper).');
-            }
-            if (!hfApiKey) {
-                throw new Error('Hugging Face API key not found. Please configure it in Settings (needed for NLLB).');
-            }
-            formData.append('groqApiKey', groqApiKey);
-            formData.append('hfApiKey', hfApiKey);
-        }
-        
-
         
         const response = await fetch('/translate', {
             method: 'POST',

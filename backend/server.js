@@ -1,5 +1,6 @@
 const express = require('express');
 const https = require('https');
+const http = require('http');
 const fs = require('fs');
 const cors = require('cors');
 const multer = require('multer');
@@ -12,13 +13,18 @@ const groqHandler = require('./groq_handler');
 const huggingfaceHandler = require('./huggingface_handler');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
-// SSL certificate options
-const sslOptions = {
-  key: fs.readFileSync(path.join(__dirname, '../ssl/key.pem')),
-  cert: fs.readFileSync(path.join(__dirname, '../ssl/cert.pem'))
-};
+// SSL certificate options — optional for Cloud Run (TLS terminated by proxy)
+let sslOptions = null;
+const keyPath = path.join(__dirname, '../ssl/key.pem');
+const certPath = path.join(__dirname, '../ssl/cert.pem');
+if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+  sslOptions = {
+    key: fs.readFileSync(keyPath),
+    cert: fs.readFileSync(certPath)
+  };
+}
 
 // Middleware
 app.use(cors());
@@ -55,21 +61,9 @@ app.post('/translate', upload.single('audio'), async (req, res) => {
       }
       result = await llamaHandler.processAudio(req.file.path, ociApiKey);
     } else if (provider === 'groq') {
-      const groqApiKey = req.body.groqApiKey;
-      if (!groqApiKey) {
-        return res.status(400).json({ error: 'GROQ API key is required' });
-      }
-      result = await groqHandler.processAudio(req.file.path, groqApiKey);
+      result = await groqHandler.processAudio(req.file.path);
     } else if (provider === 'huggingface') {
-      const groqApiKey = req.body.groqApiKey;
-      const hfApiKey = req.body.hfApiKey;
-      if (!groqApiKey) {
-        return res.status(400).json({ error: 'GROQ API key is required for Whisper' });
-      }
-      if (!hfApiKey) {
-        return res.status(400).json({ error: 'Hugging Face API key is required for NLLB' });
-      }
-      result = await huggingfaceHandler.processAudio(req.file.path, groqApiKey, hfApiKey);
+      result = await huggingfaceHandler.processAudio(req.file.path);
     } else {
       return res.status(400).json({ error: 'Invalid provider' });
     }
@@ -95,7 +89,21 @@ app.post('/translate', upload.single('audio'), async (req, res) => {
   }
 });
 
-// Create HTTPS server
-https.createServer(sslOptions, app).listen(PORT, () => {
-  console.log(`Server running on https://localhost:${PORT}`);
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    providers: ['gcp', 'oci', 'groq', 'huggingface'],
+    groqKeyConfigured: !!process.env.GROQ_API_KEY,
+  });
 });
+
+// Create server — HTTPS if certs available, otherwise HTTP (Cloud Run handles TLS)
+if (sslOptions) {
+  https.createServer(sslOptions, app).listen(PORT, () => {
+    console.log(`Server running on https://localhost:${PORT}`);
+  });
+} else {
+  http.createServer(app).listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT} (TLS terminated by proxy)`);
+  });
+}

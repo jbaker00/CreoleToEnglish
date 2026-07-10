@@ -23,15 +23,18 @@ async function convertToMp3(inputPath) {
   });
 }
 
-async function processAudio(audioPath, groqApiKey, hfApiKey) {
+async function processAudio(audioPath) {
   let mp3Path = null;
-  
+
   try {
+    const groqApiKey = process.env.GROQ_API_KEY;
+    const hfApiKey = process.env.HF_API_KEY;
+
     if (!groqApiKey) {
-      throw new Error('GROQ API key is required for Whisper transcription.');
+      throw new Error('GROQ API key is required (set GROQ_API_KEY env var).');
     }
     if (!hfApiKey) {
-      throw new Error('Hugging Face API key is required for NLLB translation.');
+      throw new Error('Hugging Face API key is required (set HF_API_KEY env var).');
     }
 
     // Step 1: Convert to MP3
@@ -41,7 +44,7 @@ async function processAudio(audioPath, groqApiKey, hfApiKey) {
 
     // Step 2: Use Whisper for speech-to-text via GROQ
     console.log('HF: Transcribing audio with Whisper (via GROQ)...');
-    
+
     const groqClient = new Groq({ apiKey: groqApiKey });
     const audioStream = fsSync.createReadStream(mp3Path);
     
@@ -64,7 +67,7 @@ async function processAudio(audioPath, groqApiKey, hfApiKey) {
     // Step 3: Translate using NLLB via HuggingFace Inference API
     console.log('HF: Translating with NLLB...');
     
-    const hf = new HfInference(hfApiKey);
+    const hf = new HfInference(hfApiKey); // uses env var resolved above
     
     const translationResult = await hf.translation({
       model: 'facebook/nllb-200-distilled-600M',
